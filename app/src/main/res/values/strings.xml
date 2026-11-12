@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Continuous Tapper</string>
+    <string name="accessibility_description">Displays a movable tap target and repeats screen taps when started.</string>
+</resources>
