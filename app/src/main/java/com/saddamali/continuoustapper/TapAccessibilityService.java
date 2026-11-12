@@ -19,18 +19,20 @@ import android.widget.TextView;
 import android.view.accessibility.AccessibilityEvent;
 
 public class TapAccessibilityService extends AccessibilityService {
+    private static final int DOUBLE_TAP_GAP_MS = 100;
+    private static final int TAP_DURATION_MS = 45;
     private WindowManager wm;
     private View panel, target;
     private TextView status, speedLabel;
     private Handler handler;
     private boolean running;
-    private int intervalMs = 100;
+    private int intervalMs = 350;
     private int panelX = 24, panelY = 120, targetX = 450, targetY = 700;
 
     private final Runnable tapLoop = new Runnable() {
         @Override public void run() {
             if (!running) return;
-            performTap();
+            performDoubleTap();
             handler.postDelayed(this, intervalMs);
         }
     };
@@ -84,16 +86,16 @@ public class TapAccessibilityService extends AccessibilityService {
         box.addView(buttons);
 
         speedLabel = new TextView(this);
-        speedLabel.setText("Interval: 100 ms");
+        speedLabel.setText("Double tap cycle: 350 ms");
         speedLabel.setTextColor(Color.WHITE);
         box.addView(speedLabel);
         SeekBar speed = new SeekBar(this);
-        speed.setMax(940);
-        speed.setProgress(40);
+        speed.setMax(750);
+        speed.setProgress(100);
         speed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar s, int progress, boolean fromUser) {
-                intervalMs = 60 + progress;
-                speedLabel.setText("Interval: " + intervalMs + " ms");
+                intervalMs = 250 + progress;
+                speedLabel.setText("Double tap cycle: " + intervalMs + " ms");
             }
             @Override public void onStartTrackingTouch(SeekBar s) {}
             @Override public void onStopTrackingTouch(SeekBar s) {}
@@ -150,7 +152,7 @@ public class TapAccessibilityService extends AccessibilityService {
     private void startTapping() {
         if (running) return;
         running = true;
-        status.setText("Status: RUNNING");
+        status.setText("Status: RUNNING, DOUBLE TAPPING");
         status.setTextColor(0xFF7CFC98);
         handler.removeCallbacks(tapLoop);
         tapLoop.run();
@@ -165,14 +167,21 @@ public class TapAccessibilityService extends AccessibilityService {
         }
     }
 
-    private void performTap() {
+    private void performDoubleTap() {
         if (target == null || !running) return;
         int[] location = new int[2];
         target.getLocationOnScreen(location);
-        Path path = new Path();
-        path.moveTo(location[0] + target.getWidth() / 2f, location[1] + target.getHeight() / 2f);
-        GestureDescription.StrokeDescription stroke = new GestureDescription.StrokeDescription(path, 0, 45);
-        dispatchGesture(new GestureDescription.Builder().addStroke(stroke).build(), null, null);
+        Path firstTap = new Path();
+        float x = location[0] + target.getWidth() / 2f;
+        float y = location[1] + target.getHeight() / 2f;
+        firstTap.moveTo(x, y);
+        Path secondTap = new Path();
+        secondTap.moveTo(x, y);
+
+        GestureDescription.Builder gesture = new GestureDescription.Builder();
+        gesture.addStroke(new GestureDescription.StrokeDescription(firstTap, 0, TAP_DURATION_MS));
+        gesture.addStroke(new GestureDescription.StrokeDescription(secondTap, DOUBLE_TAP_GAP_MS, TAP_DURATION_MS));
+        dispatchGesture(gesture.build(), null, null);
     }
 
     private void hideControls() {
