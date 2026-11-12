@@ -23,12 +23,12 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Build debug APK
-        run: gradle --no-daemon assembleDebug
+      - name: Build test release APK
+        run: gradle --no-daemon assembleRelease
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: continuous-tapper-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: continuous-tapper-release-test-apk
+          path: app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14
